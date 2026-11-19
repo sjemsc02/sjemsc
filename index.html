@@ -375,12 +375,22 @@ function clearLocalCache(){
   try{ localStorage.removeItem(LOCAL_KEY); }catch(e){}
 }
 
+// 서버에 올려둔 엑셀 파일 이름 후보 (앞에서부터 차례로 시도, .xls 형식 파일도 읽을 수 있음)
+const SERVER_FILE_CANDIDATES = ["hospitals.xlsx","hospitals.xls","hospitals.xlsx.xls"];
+
 async function fetchServerFile(){
-  const res = await fetch("hospitals.xlsx?v=" + Date.now(), {cache:"no-store"});
-  if(!res.ok) throw new Error("no file");
-  const buf = await res.arrayBuffer();
-  const wb = XLSX.read(buf, {type:"array"});
-  return parseWorkbookToHospitals(wb);
+  let lastErr = new Error("no file");
+  for(const name of SERVER_FILE_CANDIDATES){
+    try{
+      const res = await fetch(name + "?v=" + Date.now(), {cache:"no-store"});
+      if(!res.ok) continue;
+      const buf = await res.arrayBuffer();
+      const wb = XLSX.read(buf, {type:"array"});
+      const rows = parseWorkbookToHospitals(wb);
+      if(rows.length) return rows;
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr;
 }
 
 async function loadDefaultData(forceServer){
