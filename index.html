@@ -357,7 +357,8 @@ function parseWorkbookToHospitals(workbook){
    "이 브라우저"에 저장해두어 페이지를 다시 열어도 매번 엑셀을 새로 올릴 필요가 없게 합니다.
    단, 이 저장은 이 브라우저(이 기기)에만 남습니다. 다른 방문자 전체에게 반영하려면
    여전히 "② 엑셀로 내보내기"로 받은 파일을 서버의 hospitals.xlsx에 덮어써야 합니다. */
-const LOCAL_KEY = "sejong_hospitals_local_v1";
+const LOCAL_KEY = "sejong_hospitals_local_v2";
+try{ localStorage.removeItem("sejong_hospitals_local_v1"); }catch(e){} // 이전 버전이 자동 저장해둔 옛 목록 제거
 
 function saveLocalCache(){
   try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(hospitals)); }catch(e){}
@@ -388,8 +389,7 @@ async function loadDefaultData(forceServer){
     hospitals = cached;
   } else {
     try{
-      hospitals = await fetchServerFile();
-      saveLocalCache();
+      hospitals = await fetchServerFile(); // 방문자는 항상 서버 파일 기준 (브라우저 저장은 관리자가 업로드/수정했을 때만)
     }catch(e){
       hospitals = []; // 파일이 없으면 빈 상태로 시작 (임의의 예시 병원을 추가하지 않음)
     }
